@@ -425,53 +425,8 @@ abstract class AbstractHttp2StreamChannel extends DefaultAttributeMap implements
     }
 
     @Override
-    public Future<Void> bind(SocketAddress localAddress, Promise<Void> promise) {
-        return pipeline().bind(localAddress, promise);
-    }
-
-    @Override
-    public Future<Void> connect(SocketAddress remoteAddress, Promise<Void> promise) {
-        return pipeline().connect(remoteAddress, promise);
-    }
-
-    @Override
-    public Future<Void> connect(SocketAddress remoteAddress, SocketAddress localAddress, Promise<Void> promise) {
-        return pipeline().connect(remoteAddress, localAddress, promise);
-    }
-
-    @Override
-    public Future<Void> disconnect(Promise<Void> promise) {
-        return pipeline().disconnect(promise);
-    }
-
-    @Override
-    public Future<Void> close(Promise<Void> promise) {
-        return pipeline().close(promise);
-    }
-
-    @Override
-    public Future<Void> register(Promise<Void> promise) {
-        return pipeline().register(promise);
-    }
-
-    @Override
-    public Future<Void> deregister(Promise<Void> promise) {
-        return pipeline().deregister(promise);
-    }
-
-    @Override
     public Future<Void> write(Object msg) {
         return pipeline().write(msg);
-    }
-
-    @Override
-    public Future<Void> write(Object msg, Promise<Void> promise) {
-        return pipeline().write(msg, promise);
-    }
-
-    @Override
-    public Future<Void> writeAndFlush(Object msg, Promise<Void> promise) {
-        return pipeline().writeAndFlush(msg, promise);
     }
 
     @Override
@@ -1064,9 +1019,7 @@ abstract class AbstractHttp2StreamChannel extends DefaultAttributeMap implements
     }
 
     protected Future<Void> write0(ChannelHandlerContext ctx, Object msg) {
-        Promise<Void> promise = ctx.newPromise();
-        ctx.write(msg, promise);
-        return promise;
+        return ctx.write(msg);
     }
 
     protected abstract boolean isParentReadInProgress();
