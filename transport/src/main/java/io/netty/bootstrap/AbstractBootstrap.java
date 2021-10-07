@@ -269,6 +269,7 @@ public abstract class AbstractBootstrap<B extends AbstractBootstrap<B, C>, C ext
     }
 
     private ChannelFuture doBind(final SocketAddress localAddress) {
+        //创建Channel，并注册到Selector上，并且还会做一些初始化工作，例如添加一个ChannelChannelInitializer负责处理accept事件
         final ChannelFuture regFuture = initAndRegister();
         final Channel channel = regFuture.channel();
         if (regFuture.cause() != null) {
@@ -307,7 +308,13 @@ public abstract class AbstractBootstrap<B extends AbstractBootstrap<B, C>, C ext
     final ChannelFuture initAndRegister() {
         Channel channel = null;
         try {
+            //channelFactory内部会用反射创建Channel，Class类已经提前在BootStrap的channel方法中设置了
+            //如果是服务端这里创建的就是NioServerSocketChannel
+            //NioServerSocketChannel是对jdk的ServerSocketChannel一层封装，在构造方法里会创建一个ServerSocketChannel
             channel = channelFactory.newChannel();
+
+            //将配置的属性设置到Channel中
+            //在ServerBootStrap中还会添加一个ChannelChannelInitializer负责处理accept事件
             init(channel);
         } catch (Throwable t) {
             if (channel != null) {
@@ -320,6 +327,7 @@ public abstract class AbstractBootstrap<B extends AbstractBootstrap<B, C>, C ext
             return new DefaultChannelPromise(new FailedChannel(), GlobalEventExecutor.INSTANCE).setFailure(t);
         }
 
+        //把Channel注册到Selector上
         ChannelFuture regFuture = config().group().register(channel);
         if (regFuture.cause() != null) {
             if (channel.isRegistered()) {

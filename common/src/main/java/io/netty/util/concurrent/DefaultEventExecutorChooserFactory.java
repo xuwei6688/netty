@@ -53,6 +53,14 @@ public final class DefaultEventExecutorChooserFactory implements EventExecutorCh
 
         @Override
         public EventExecutor next() {
+            //假设 executors.length = 4
+            //第一次选择 0 & 3 ==> 00000000 & 00000011 = 00000000 = 0
+            //第二次选择 1 & 3 ==> 00000001 & 00000011 = 00000001 = 1
+            //第三次选择 2 & 3 ==> 00000010 & 00000011 = 00000010 = 2
+            //第四次选择 3 & 3 ==> 00000011 & 00000011 = 00000011 = 3
+            //第五次选择 4 & 3 ==> 00000100 & 00000011 = 00000011 = 0
+            //第五次选择 5 & 3 ==> 00000101 & 00000011 = 00000011 = 1
+            //可见选择的方式就是从头开始轮询，轮询到末尾再从头开始轮询。
             return executors[idx.getAndIncrement() & executors.length - 1];
         }
     }

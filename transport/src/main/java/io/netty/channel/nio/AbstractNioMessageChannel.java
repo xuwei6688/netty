@@ -76,6 +76,7 @@ public abstract class AbstractNioMessageChannel extends AbstractNioChannel {
             try {
                 try {
                     do {
+                        //NioServerSocketChannel会accept得到NioSocketChannel
                         int localRead = doReadMessages(readBuf);
                         if (localRead == 0) {
                             break;
@@ -92,6 +93,8 @@ public abstract class AbstractNioMessageChannel extends AbstractNioChannel {
                 }
 
                 int size = readBuf.size();
+                //pipeline上有一个ServerBootstrapAcceptor处理器，负责将NioServerNioSocketChannel注册到子EventLoopGroup中轮询下一个EventLoop中的Selector上
+                //ServerBootstrapAcceptor是何时添加到pipeline上的？
                 for (int i = 0; i < size; i ++) {
                     readPending = false;
                     pipeline.fireChannelRead(readBuf.get(i));

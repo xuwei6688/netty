@@ -139,6 +139,7 @@ public class ServerBootstrap extends AbstractBootstrap<ServerBootstrap, ServerCh
         final Entry<ChannelOption<?>, Object>[] currentChildOptions = newOptionsArray(childOptions);
         final Entry<AttributeKey<?>, Object>[] currentChildAttrs = newAttributesArray(childAttrs);
 
+        //ChannelInitializer是一个特殊的ChannelInboundHandler，能够在Channel首次注册到EventLoop上时初始化它。
         p.addLast(new ChannelInitializer<Channel>() {
             @Override
             public void initChannel(final Channel ch) {
@@ -148,6 +149,8 @@ public class ServerBootstrap extends AbstractBootstrap<ServerBootstrap, ServerCh
                     pipeline.addLast(handler);
                 }
 
+                //提交任务，将ServerBootstrapAcceptor添加到boss EventLoopGroup的pipeline中
+                //ServerBootstrapAcceptor的作用是处理accept事件，将NioSocketChannel注册到子EventLoopGroup的某个NioEventLoop上
                 ch.eventLoop().execute(new Runnable() {
                     @Override
                     public void run() {

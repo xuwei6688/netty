@@ -505,12 +505,15 @@ public abstract class AbstractChannel extends DefaultAttributeMap implements Cha
                     return;
                 }
                 boolean firstRegistration = neverRegistered;
+                //模板方法，在NIO实现中，就是将Channel注册到Selector上。
                 doRegister();
                 neverRegistered = false;
                 registered = true;
 
                 // Ensure we call handlerAdded(...) before we actually notify the promise. This is needed as the
                 // user may already fire events through the pipeline in the ChannelFutureListener.
+
+                //ChannelInitializer#initChannel在这里被调用
                 pipeline.invokeHandlerAddedIfNeeded();
 
                 safeSetSuccess(promise);

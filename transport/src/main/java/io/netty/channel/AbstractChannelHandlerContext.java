@@ -363,6 +363,7 @@ abstract class AbstractChannelHandlerContext implements ChannelHandlerContext, R
         EventExecutor executor = next.executor();
         if (executor.inEventLoop()) {
             next.invokeChannelRead(m);
+            //正常read都是走的上面分支，尚不清楚什么时候会走下面的
         } else {
             executor.execute(new Runnable() {
                 @Override

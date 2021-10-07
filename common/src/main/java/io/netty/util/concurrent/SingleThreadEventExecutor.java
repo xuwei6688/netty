@@ -455,6 +455,7 @@ public abstract class SingleThreadEventExecutor extends AbstractScheduledEventEx
      * the tasks in the task queue and returns if it ran longer than {@code timeoutNanos}.
      */
     protected boolean runAllTasks(long timeoutNanos) {
+        //从scheduledTaskQueue中获取到达执行时间的定时任务，把它们放到任务队列中
         fetchFromScheduledTaskQueue();
         Runnable task = pollTask();
         if (task == null) {
@@ -470,6 +471,7 @@ public abstract class SingleThreadEventExecutor extends AbstractScheduledEventEx
 
             runTasks ++;
 
+            //每执行64个任务判断一下任务执行的时间超没超过最大执行时间，超过的话就不再继续执行任务队列中的任务，等下次再执行
             // Check timeout every 64 tasks because nanoTime() is relatively expensive.
             // XXX: Hard-coded value - will make it configurable if it is really a problem.
             if ((runTasks & 0x3F) == 0) {
@@ -972,6 +974,9 @@ public abstract class SingleThreadEventExecutor extends AbstractScheduledEventEx
 
     private void doStartThread() {
         assert thread == null;
+        //这里出现了 Runnable 比较有迷惑性，会想当然的以为是以异步执行 Runnable。
+        //这里是否是异步取决于 Executor 的具体实现，在 EventExecutorGroup 初始初始化时会创建 ThreadPerTaskExecutor
+        //ThreadPerTaskExecutor 的 execute 方法每次都会创建一个新线程执行任务，所以这里任务的执行时异步的。
         executor.execute(new Runnable() {
             @Override
             public void run() {

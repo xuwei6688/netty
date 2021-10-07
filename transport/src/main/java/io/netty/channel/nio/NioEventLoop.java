@@ -430,7 +430,12 @@ public final class NioEventLoop extends SingleThreadEventLoop {
             logger.info("Migrated " + nChannels + " channel(s) to the new Selector.");
         }
     }
-
+    /**
+     * NioEventLoop 的 run 方法做的事情：
+     * 1. 先调用 select 轮询就绪的 Channel
+     * 2. 然后调用 processSelectedKeys() 处理 I/O 事件
+     * 3. 最后调用 runAllTasks() 处理任务队列
+     */
     @Override
     protected void run() {
         int selectCnt = 0;
@@ -438,6 +443,7 @@ public final class NioEventLoop extends SingleThreadEventLoop {
             try {
                 int strategy;
                 try {
+                    //如果队列中有任务就执行selectNow，否则执行SelectStrategy.SELECT
                     strategy = selectStrategy.calculateStrategy(selectNowSupplier, hasTasks());
                     switch (strategy) {
                     case SelectStrategy.CONTINUE:
@@ -447,6 +453,8 @@ public final class NioEventLoop extends SingleThreadEventLoop {
                         // fall-through to SELECT since the busy-wait is not supported with NIO
 
                     case SelectStrategy.SELECT:
+                        //计算出下一次定时任务应该执行的时间，如果taskQueue没有任务，
+                        //select阻塞到下次定时任务执行时间
                         long curDeadlineNanos = nextScheduledTaskDeadlineNanos();
                         if (curDeadlineNanos == -1L) {
                             curDeadlineNanos = NONE; // nothing on the calendar
@@ -487,6 +495,7 @@ public final class NioEventLoop extends SingleThreadEventLoop {
                         // Ensure we always run tasks.
                         ranTasks = runAllTasks();
                     }
+                 //当Selector监听到事件发生，strategy就表示发生事件的SelectionKey的数量
                 } else if (strategy > 0) {
                     final long ioStartTime = System.nanoTime();
                     try {
@@ -494,6 +503,8 @@ public final class NioEventLoop extends SingleThreadEventLoop {
                     } finally {
                         // Ensure we always run tasks.
                         final long ioTime = System.nanoTime() - ioStartTime;
+                        //执行任务队列中的任务
+                        //ioRatio是处理io事件占用事件的比例，根据这个比例和本次处理io事件占用的时间，计算出本次处理队列任务最大可以执行的时间
                         ranTasks = runAllTasks(ioTime * (100 - ioRatio) / ioRatio);
                     }
                 } else {
@@ -713,8 +724,11 @@ public final class NioEventLoop extends SingleThreadEventLoop {
                 ch.unsafe().forceFlush();
             }
 
-            // Also check for readOps of 0 to workaround possible JDK bug which may otherwise lead
+            // Also check for readOps of 0 to workaround（替代方法） possible JDK bug which may otherwise lead
             // to a spin loop
+            //处理read或accept事件，这里利用了多态:
+            //- accept走NioMessageUnsafe的read，
+            //- read走NioByteUnsafe的read
             if ((readyOps & (SelectionKey.OP_READ | SelectionKey.OP_ACCEPT)) != 0 || readyOps == 0) {
                 unsafe.read();
             }

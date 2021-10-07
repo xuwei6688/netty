@@ -65,6 +65,8 @@ public class NioSocketChannel extends AbstractNioByteChannel implements io.netty
              *  {@link SelectorProvider#provider()} which is called by each SocketChannel.open() otherwise.
              *
              *  See <a href="https://github.com/netty/netty/issues/2308">#2308</a>.
+             *  如果使用 ServerSocketChannel.open()或者SocketChannel.open()，每次创建Channel在它们的内部都需要调用 SelectorProvider.provider()
+             *  这个过程需要竞争锁，会造成性能消耗。所以Netty将SelectorProvider创建好后存了起来
              */
             return provider.openSocketChannel();
         } catch (IOException e) {
