@@ -781,11 +781,13 @@ abstract class AbstractChannelHandlerContext implements ChannelHandlerContext, R
             ReferenceCountUtil.release(msg);
             throw e;
         }
-
+        //1、获取pipeline中下一个出站处理器
         final AbstractChannelHandlerContext next = findContextOutbound(flush ?
                 (MASK_WRITE | MASK_FLUSH) : MASK_WRITE);
+        //似乎和内存泄漏检测有关系
         final Object m = pipeline.touch(msg, next);
         EventExecutor executor = next.executor();
+        //2、如果当前线程和eventLoop分配给当前Channel是同一个线程直接执行；否则提交任务到任务队列中
         if (executor.inEventLoop()) {
             if (flush) {
                 next.invokeWriteAndFlush(m, promise);

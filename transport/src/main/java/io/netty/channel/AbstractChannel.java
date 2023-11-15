@@ -912,8 +912,8 @@ public abstract class AbstractChannel extends DefaultAttributeMap implements Cha
                 return;
             }
 
-            outboundBuffer.addFlush();
-            flush0();
+            outboundBuffer.addFlush();//1、遍历单向链表，修改entry状态为不可取消
+            flush0();//2、数据写入channel
         }
 
         @SuppressWarnings("deprecation")

@@ -93,7 +93,8 @@ public abstract class AbstractNioMessageChannel extends AbstractNioChannel {
                 }
 
                 int size = readBuf.size();
-                //pipeline上有一个ServerBootstrapAcceptor处理器，负责将NioServerNioSocketChannel注册到子EventLoopGroup中轮询下一个EventLoop中的Selector上
+                //pipeline上有一个ServerBootstrapAcceptor处理器，负责将NioServerNioSocketChannel注册到子
+                // EventLoopGroup中轮询下一个EventLoop中的Selector上
                 //ServerBootstrapAcceptor是何时添加到pipeline上的？
                 for (int i = 0; i < size; i ++) {
                     readPending = false;

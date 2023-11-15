@@ -146,6 +146,8 @@ public final class ChannelOutboundBuffer {
             }
             do {
                 flushed ++;
+                //setUncancellable设置这个entry不可以被取消；
+                //如果返回false，表示在设置不可取消前已经被取消了。调用entry.cancel()来释放资源
                 if (!entry.promise.setUncancellable()) {
                     // Was cancelled so make sure we free up memory and notify about the freed bytes
                     int pending = entry.cancel();
@@ -172,6 +174,8 @@ public final class ChannelOutboundBuffer {
             return;
         }
 
+        //每次记录总共已经增加的大小，如果超过高水位（默认64k）将可写入状态设置为不可写入；
+        // 除非水位降到低水位下（32k），才能恢复成可写状态
         long newWriteBufferSize = TOTAL_PENDING_SIZE_UPDATER.addAndGet(this, size);
         if (newWriteBufferSize > channel.config().getWriteBufferHighWaterMark()) {
             setUnwritable(invokeLater);

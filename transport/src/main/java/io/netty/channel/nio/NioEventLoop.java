@@ -443,7 +443,11 @@ public final class NioEventLoop extends SingleThreadEventLoop {
             try {
                 int strategy;
                 try {
-                    //如果队列中有任务就执行selectNow，否则执行SelectStrategy.SELECT
+                    //一、try...catch内这一坨代码的逻辑：
+                    //如果任务队列中有任务，立即获取io event，然后执行后续的io事件处理、任务处理（可见队列中有任务，即使没有没有事件发生，也会执行任务）
+                    //如果任务队列中没有任务，执行 select，阻塞到最近一个定时任务执行时间。
+
+                    //如果队列中有任务就执行Selector的selectNow，如果有就绪的事件，返回就绪事件数量；没有任务返回SelectStrategy.SELECT
                     strategy = selectStrategy.calculateStrategy(selectNowSupplier, hasTasks());
                     switch (strategy) {
                     case SelectStrategy.CONTINUE:
@@ -489,10 +493,11 @@ public final class NioEventLoop extends SingleThreadEventLoop {
                 if (ioRatio == 100) {
                     try {
                         if (strategy > 0) {
+                            //二、处理 IO 事件
                             processSelectedKeys();
                         }
                     } finally {
-                        // Ensure we always run tasks.
+                        //三、处理任务
                         ranTasks = runAllTasks();
                     }
                  //当Selector监听到事件发生，strategy就表示发生事件的SelectionKey的数量
@@ -517,6 +522,7 @@ public final class NioEventLoop extends SingleThreadEventLoop {
                                 selectCnt - 1, selector);
                     }
                     selectCnt = 0;
+                    //解决臭名昭著的jdk空轮询bug
                 } else if (unexpectedSelectorWakeup(selectCnt)) { // Unexpected wakeup (unusual case)
                     selectCnt = 0;
                 }
